@@ -380,11 +380,22 @@ body {
   gap: 10px;
 }
 
-.qr-block img {
+.qr-canvas-wrap {
+  display: inline-flex;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: #fff;
   padding: 8px;
+  min-width: 180px;
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-canvas-wrap img,
+.qr-canvas-wrap canvas {
+  display: block;
+  border-radius: 4px;
 }
 
 .qr-hint {

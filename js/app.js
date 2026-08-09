@@ -14,6 +14,9 @@
     const s = total % 60;
     return `${m}:${String(s).padStart(2, '0')}`;
   };
+  // Racine du site (dossier contenant index.html), pour construire des URLs
+  // absolues fiables quelle que soit la profondeur de déploiement.
+  const BASE_URL = location.href.replace(/[^/]*(\?.*)?$/, '');
 
   // ---------- Tabs ----------
   const tabsEl = document.querySelector('.tabs');
@@ -51,6 +54,7 @@
   const MAX_SIZE = 15 * 1024 * 1024;
   let selectedFiles = [];
   let countdownTimer = null;
+  let qrInstance = null;
 
   function setDropError(msg) {
     if (!msg) {
@@ -156,10 +160,10 @@
     showDropStep('uploading');
 
     const formData = new FormData();
-    selectedFiles.forEach((f) => formData.append('images', f));
+    selectedFiles.forEach((f) => formData.append('images[]', f));
 
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const res = await fetch('api/upload.php', { method: 'POST', body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Échec de l'envoi.");
       showUploadResult(data);
@@ -169,10 +173,24 @@
     }
   });
 
+  function renderQrCode(code) {
+    const container = $('result-qr');
+    container.innerHTML = '';
+    const url = `${BASE_URL}?code=${code}`;
+    qrInstance = new QRCode(container, {
+      text: url,
+      width: 180,
+      height: 180,
+      colorDark: '#17172b',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  }
+
   function showUploadResult(batch) {
     showDropStep('result');
     $('result-code').textContent = batch.codeFormatted;
-    $('result-qr').src = `/api/qr/${batch.code}`;
+    renderQrCode(batch.code);
     startCountdown($('result-countdown'), batch.expiresAt, () => {
       showDropStep('select');
       resetDropForm();
@@ -243,7 +261,7 @@
   async function lookupCode(code) {
     showRetrieveStep('loading');
     try {
-      const res = await fetch(`/api/batch/${code}`);
+      const res = await fetch(`api/batch.php?code=${encodeURIComponent(code)}`);
       if (res.status === 404) {
         showRetrieveStep('expired');
         return;
@@ -269,7 +287,7 @@
       const img = document.createElement('img');
       img.className = 'gallery-thumb';
       img.loading = 'lazy';
-      img.src = `/api/batch/${batch.code}/${file.id}/view`;
+      img.src = `api/view.php?code=${batch.code}&id=${file.id}`;
       img.alt = file.name;
       item.appendChild(img);
 
@@ -283,7 +301,7 @@
 
       const dl = document.createElement('a');
       dl.className = 'gallery-download';
-      dl.href = `/api/batch/${batch.code}/${file.id}/download`;
+      dl.href = `api/download.php?code=${batch.code}&id=${file.id}`;
       dl.setAttribute('aria-label', `Télécharger ${file.name}`);
       dl.innerHTML =
         '<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -293,7 +311,7 @@
       galleryGrid.appendChild(item);
     });
 
-    $('download-all-btn').href = `/api/batch/${batch.code}/zip`;
+    $('download-all-btn').href = `api/zip.php?code=${batch.code}`;
 
     startCountdown($('gallery-countdown'), batch.expiresAt, () => {
       showRetrieveStep('expired');

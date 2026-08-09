@@ -7,7 +7,7 @@
   <meta name="description" content="Dépose une image, reçois un code, retrouve-la depuis n'importe quel appareil. Sans compte, suppression automatique après 5 minutes." />
   <meta name="theme-color" content="#7c5cff" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%23ff6bcb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ccircle cx='50' cy='42' r='16' fill='white' fill-opacity='.95'/%3E%3Cpath d='M50 66 L38 82 H62 Z' fill='white' fill-opacity='.95'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <div class="bg-glow" aria-hidden="true"></div>
@@ -67,7 +67,7 @@
         <p id="result-countdown" class="countdown"></p>
 
         <div class="qr-block">
-          <img id="result-qr" alt="QR code vers ces images" width="180" height="180" />
+          <div id="result-qr" class="qr-canvas-wrap"></div>
           <p class="qr-hint">Scanne depuis un téléphone pour ouvrir directement tes images</p>
         </div>
 
@@ -117,6 +117,7 @@
     <p>Aucun compte, aucune base de données : tes images vivent 5 minutes sur le serveur puis sont supprimées définitivement.</p>
   </footer>
 
-  <script src="/js/app.js"></script>
+  <script src="js/vendor/qrcode.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

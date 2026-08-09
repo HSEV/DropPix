@@ -1,0 +1,10 @@
+# Les images deposees ne doivent jamais etre accessibles directement par une
+# URL devinable : tout passage par ce dossier se fait via api/view.php,
+# api/download.php ou api/zip.php, qui verifient le code et l'expiration.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

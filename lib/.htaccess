@@ -1,0 +1,9 @@
+# Ce dossier est inclus par du PHP (require_once), il n'a jamais besoin
+# d'etre accessible directement depuis une URL.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

@@ -6,9 +6,9 @@
 
 Aucun compte. Aucune base de données. Suppression automatique après **5 minutes**.
 
-![Node](https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=white)
-![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-777BB4?logo=php&logoColor=white)
 ![No database](https://img.shields.io/badge/database-none-blueviolet)
+![No Composer](https://img.shields.io/badge/dependencies-aucune-success)
 ![Vanilla JS](https://img.shields.io/badge/frontend-vanilla%20JS-f7df1e?logo=javascript&logoColor=black)
 
 </div>
@@ -41,100 +41,157 @@ traîne.
                           ⏱ auto-suppression après 5 min
 ```
 
+## 🧱 Stack technique (aucune dépendance à installer)
+
+Choisie pour tourner tel quel sur un hébergement mutualisé classique
+(Hostinger, OVH, etc.) — pas de Node.js, pas de Composer, pas de build step.
+
+| Couche | Techno | Pourquoi |
+|---|---|---|
+| Serveur | **PHP** (7.4+) | Supporté nativement par la quasi-totalité des hébergements web |
+| Stockage | Système de fichiers (`storage/<code>/...`) | Pas de BDD à gérer ; chaque dossier porte sa propre date d'expiration dans un `meta.json` |
+| Frontend | HTML / CSS / JS vanilla | Aucun build, aucun framework, chargement instantané |
+| Zip à la volée | `ZipArchive` (natif PHP) | Rien à installer |
+| QR code | [qrcodejs](https://github.com/davidshimjs/qrcodejs) (vendored, MIT) | Généré **côté navigateur**, aucun appel serveur, aucune dépendance externe au runtime |
+| Rate limiting | Fichiers + `flock()` | Pas de Redis, juste des compteurs sur disque |
+
 ## 🔒 Comment la sécurité est gérée
 
 - **Vraie vérification d'image** : chaque fichier est inspecté par sa
   signature binaire (*magic bytes*), pas par son extension ou son
   `Content-Type` déclaré — un `.exe` renommé en `.png` est rejeté. Voir
-  [server/lib/imageValidator.js](server/lib/imageValidator.js).
-- **Codes non devinables** : générés avec `crypto.randomInt` sur un alphabet
-  de 32 caractères sans ambiguïté visuelle (pas de `0/O`, `1/I/L`), soit
+  [lib/ImageValidator.php](lib/ImageValidator.php).
+- **Codes non devinables** : générés avec `random_int()` sur un alphabet de
+  32 caractères sans ambiguïté visuelle (pas de `0/O`, `1/I/L`), soit
   ~1 milliard de combinaisons pour une fenêtre de vie de 5 minutes.
 - **Rate limiting** sur l'upload et sur la récupération de code, pour rendre
   tout brute-force impraticable dans le temps imparti.
-- **En-têtes de sécurité** via `helmet` (CSP, nosniff, etc.).
-
-## 🧱 Stack technique
-
-Choisie pour rester la plus simple et la plus lisible possible — un seul
-process, aucune dépendance superflue.
-
-| Couche | Techno | Pourquoi |
-|---|---|---|
-| Serveur | Node.js + Express | Minimaliste, un seul fichier de routes |
-| Stockage | Système de fichiers + `Map` en mémoire | Pas de BDD à gérer ; la donnée est éphémère par nature |
-| Frontend | HTML / CSS / JS vanilla | Aucun build, aucun framework, chargement instantané |
-| Upload | `multer` (buffer mémoire) | Validation avant écriture disque |
-| Zip à la volée | `archiver` | Téléchargement groupé sans fichier temporaire |
-| QR code | `qrcode` | Généré côté serveur, PNG servi directement |
-
-## 🚀 Démarrer en local
-
-```bash
-git clone https://github.com/HSEV/DropPix.git
-cd DropPix
-npm install
-npm start
-# → http://localhost:3000
-```
-
-`npm run dev` relance automatiquement le serveur à chaque modification
-(`node --watch`).
-
-Variable d'environnement disponible (voir [.env.example](.env.example)) :
-
-| Variable | Défaut | Description |
-|---|---|---|
-| `PORT` | `3000` | Port d'écoute du serveur |
+- **`storage/` non accessible en HTTP** : un `.htaccess` (`Require all
+  denied`) bloque tout accès direct au dossier de stockage. Les images ne
+  transitent que par `api/view.php`, `api/download.php` ou `api/zip.php`,
+  qui vérifient le code et l'expiration à chaque appel.
+- **En-têtes de sécurité** (`X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`) sur chaque réponse.
 
 ## 📁 Structure du projet
 
 ```
 DropPix/
-├── server/
-│   ├── index.js               # routes Express (upload, récupération, zip, QR)
-│   └── lib/
-│       ├── store.js           # Map en mémoire + expiration auto (5 min)
-│       ├── codeGen.js         # génération / formatage / normalisation des codes
-│       └── imageValidator.js  # détection d'image par magic bytes
-├── public/
-│   ├── index.html
-│   ├── css/style.css
-│   └── js/app.js               # drag & drop, appels API, compte à rebours
-├── uploads/                    # créé au runtime, vidé au démarrage, gitignored
-└── package.json
+├── index.html
+├── css/style.css
+├── js/
+│   ├── app.js                 # drag & drop, appels API, compte à rebours, QR
+│   └── vendor/qrcode.js        # génération QR côté navigateur (vendored)
+├── api/
+│   ├── upload.php              # dépôt d'images -> génère un code
+│   ├── batch.php                # métadonnées d'un code (GET ?code=)
+│   ├── view.php                  # image affichée en ligne (vignettes)
+│   ├── download.php               # téléchargement d'une image
+│   └── zip.php                     # téléchargement groupé en .zip
+├── lib/
+│   ├── Store.php                # stockage fichiers + expiration (5 min)
+│   ├── CodeGen.php               # génération / formatage / normalisation des codes
+│   ├── ImageValidator.php         # détection d'image par magic bytes
+│   ├── RateLimiter.php            # limiteur de débit basé fichiers
+│   └── Http.php                    # petits utilitaires JSON / sécurité
+├── cron/cleanup.php             # nettoyage des dépôts expirés (Cron Job)
+├── storage/                      # créé au runtime, gitignored, non accessible en HTTP
+└── .htaccess
 ```
+
+Chaque dossier interne (`lib/`, `cron/`, `storage/`) a son propre
+`.htaccess` qui bloque tout accès direct par URL.
+
+## 🚀 Déployer sur Hostinger (hébergement mutualisé)
+
+Pas besoin de SSH, de Composer ni de build : on dépose juste les fichiers.
+
+### 1. Créer le sous-domaine
+
+Dans **hPanel → Domaines → Sous-domaines** :
+- Sous-domaine : `droppix`
+- Domaine : `hsev.fr`
+- Dossier personnalisé : `droppix` *(hPanel créera alors
+  `public_html/droppix`, qui deviendra la racine de
+  `droppix.hsev.fr`)*
+
+### 2. Déposer les fichiers
+
+Par FTP (identifiants dans hPanel → Fichiers → FTP) ou le gestionnaire de
+fichiers hPanel : envoie **le contenu du dépôt** (pas le dossier `DropPix`
+lui-même, son contenu) directement dans `public_html/droppix/`.
+
+```
+public_html/
+└── droppix/
+    ├── index.html
+    ├── css/
+    ├── js/
+    ├── api/
+    ├── lib/
+    ├── cron/
+    ├── storage/
+    └── .htaccess
+```
+
+### 3. Vérifier les permissions
+
+Le dossier `storage/` doit être accessible en écriture par PHP (c'est le cas
+par défaut chez Hostinger, aucune action nécessaire en général).
+
+### 4. Configurer le nettoyage automatique (Cron Job)
+
+Dans **hPanel → Avancé → Cron Jobs**, crée une tâche :
+- Fréquence : toutes les minutes (`* * * * *`)
+- Commande :
+  ```
+  php /home/<ton-utilisateur>/domains/hsev.fr/public_html/droppix/cron/cleanup.php
+  ```
+  *(le chemin exact est affiché dans hPanel → Fichiers → Gestionnaire de
+  fichiers, en haut de la fenêtre)*
+
+Ce cron est un **filet de sécurité** : la suppression se fait déjà toute
+seule dès qu'un code expiré est consulté. Le cron rattrape uniquement les
+dépôts que personne ne re-consulte après expiration.
+
+### 5. Activer le HTTPS
+
+hPanel active normalement un certificat SSL gratuit automatiquement pour
+chaque sous-domaine (Let's Encrypt). Vérifie dans **hPanel → Sécurité →
+SSL** que `droppix.hsev.fr` est bien couvert.
+
+C'est tout — pas de Node.js, pas de process à maintenir en vie, pas de
+CNAME vers un service externe : tout tourne directement chez Hostinger.
+
+## 🧪 Tester en local
+
+Si tu as PHP installé (`php -v`) :
+
+```bash
+php -S localhost:8080
+# → http://localhost:8080
+```
+
+Aucune autre dépendance à installer.
 
 ## ⚠️ Limites assumées
 
-- **Une seule instance** : le store étant en mémoire, DropPix doit tourner
-  sur un seul process (pas de scaling horizontal sans Redis — hors scope,
-  contraire au « sans BDD » voulu).
-- **Redémarrage = tout est perdu immédiatement**, au lieu d'attendre 5 min.
-  Cohérent avec l'esprit éphémère du site.
+- **Précision de l'expiration** : un dépôt consulté après ses 5 minutes est
+  supprimé immédiatement (vérifié à chaque requête). Un dépôt **jamais
+  reconsulté** après expiration reste sur le disque jusqu'au prochain
+  passage du Cron Job — d'où l'intérêt de le régler sur *toutes les
+  minutes*.
 - **Pas de chiffrement de bout en bout** : quiconque connaît un code pendant
   sa fenêtre de 5 minutes peut accéder aux images correspondantes. Le
   rate-limiting rend le brute-force impraticable, mais ce n'est pas un
   coffre-fort.
-
-## ☁️ Déploiement
-
-Le site n'a besoin **d'aucune base de données ni de stockage persistant**
-(tout s'efface tout seul) : ça ouvre la porte aux hébergements Node les plus
-simples et les moins chers.
-
-| Option | Effort | Idéal pour |
-|---|---|---|
-| **Render / Railway** | Connecte le repo Git, ça déploie tout seul | Démarrer vite, gratuit à ~5$/mois |
-| **Fly.io** | Un peu de CLI | Toujours actif, pas de mise en veille |
-| **VPS + Caddy** | Setup manuel, HTTPS auto | Contrôle total, ~4-5€/mois |
-
-Un sous-domaine type `droppix.tondomaine.fr` fonctionne très bien : un simple
-`CNAME` vers l'URL fournie par l'hébergeur (ou un `A` vers l'IP du VPS)
-suffit.
+- **Hébergement mutualisé unique** : le rate-limiting et le compteur
+  d'expiration sont sur disque local ; si un jour tu passes sur plusieurs
+  serveurs derrière un load-balancer, il faudrait un stockage partagé
+  (hors scope ici, contraire au « sans BDD » voulu).
 
 ---
 
 <div align="center">
-<sub>Fait avec Node.js, sans base de données, et sans prise de tête.</sub>
+<sub>Fait avec PHP, sans base de données, et sans prise de tête.</sub>
 </div>
