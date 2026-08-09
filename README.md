@@ -150,9 +150,20 @@ Dans **hPanel → Avancé → Cron Jobs**, crée une tâche :
   *(le chemin exact est affiché dans hPanel → Fichiers → Gestionnaire de
   fichiers, en haut de la fenêtre)*
 
-Ce cron est un **filet de sécurité** : la suppression se fait déjà toute
-seule dès qu'un code expiré est consulté. Le cron rattrape uniquement les
-dépôts que personne ne re-consulte après expiration.
+Ce Cron Job est la façon la **plus fiable** de garantir que le stockage ne
+grossit jamais, mais DropPix a aussi deux filets de sécurité intégrés au cas
+où tu oublierais de le configurer :
+- suppression immédiate dès qu'un code expiré est consulté (visite, aperçu
+  d'une vignette, etc.) ;
+- balayage complet automatique déclenché par le trafic normal du site
+  (upload ou consultation d'un code), au plus une fois toutes les 2 minutes —
+  voir `Store::maybeSweep()` dans [lib/Store.php](lib/Store.php).
+
+Sans Cron Job, un dépôt qui n'est jamais reconsulté ET dont aucun autre
+visiteur ne fait de requête au site pendant un long moment peut rester un peu
+plus longtemps sur le disque avant d'être balayé — mais le stockage ne peut
+pas croître indéfiniment tant que le site reçoit ne serait-ce qu'un peu de
+trafic. Le Cron Job reste recommandé pour un site à très faible fréquentation.
 
 ### 5. Activer le HTTPS
 

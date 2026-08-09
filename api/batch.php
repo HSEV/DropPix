@@ -17,6 +17,12 @@ if (!RateLimiter::allow('lookup', 60, 60)) {
     Http::json(429, ['error' => 'Trop de tentatives, reessaie dans une minute.']);
 }
 
+// Filet de securite : voir Store::maybeSweep(). C'est la route la plus
+// frequemment appelee (chaque chargement de page en fait un via la reprise
+// automatique), donc le meilleur endroit pour garantir un balayage regulier
+// meme sans Cron Job configure.
+Store::maybeSweep();
+
 $code = CodeGen::normalizeInput($_GET['code'] ?? '');
 if (strlen($code) !== CodeGen::CODE_LENGTH) {
     Http::json(400, ['error' => 'Code invalide.']);

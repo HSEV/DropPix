@@ -17,6 +17,10 @@ if (!RateLimiter::allow('upload', 40, 600)) {
     Http::json(429, ['error' => "Trop d'envois depuis cette adresse, reessaie dans quelques minutes."]);
 }
 
+// Filet de securite : garantit que le stockage reste borne meme si le Cron
+// Job de nettoyage n'est pas configure sur l'hebergement (voir Store::maybeSweep).
+Store::maybeSweep();
+
 $maxFiles = 10;
 $maxFileSize = 15 * 1024 * 1024; // 15 Mo
 

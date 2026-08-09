@@ -8,16 +8,24 @@ require_once __DIR__ . '/CodeGen.php';
  * Chaque code = un dossier sous storage/, contenant les images et un
  * fichier meta.json qui porte la date d'expiration.
  *
- * L'expiration est appliquee de deux facons complementaires :
+ * L'expiration est appliquee de trois facons complementaires (PHP n'ayant
+ * pas de process persistant, aucune des trois seule ne suffit a garantir
+ * que le stockage ne grossisse jamais) :
  *  - paresseuse : a chaque acces (getBatch), un depot expire est supprime
  *    avant de repondre ;
+ *  - opportuniste : maybeSweep(), appelee sur les routes les plus
+ *    frequentes (upload, consultation), relance un balayage complet des
+ *    qu'un peu de temps s'est ecoule depuis le precedent, meme si personne
+ *    ne reconsulte les depots concernes ;
  *  - active : le script cron/cleanup.php (a brancher sur un Cron Job de
- *    l'hebergeur, ex. toutes les minutes) supprime les depots expires que
- *    personne n'a re-consultes entre-temps.
+ *    l'hebergeur, ex. toutes les minutes) fait la meme chose de facon fiable
+ *    meme sans aucun trafic.
  */
 final class Store
 {
     public const TTL_SECONDS = 300; // 5 minutes
+    private const SWEEP_MARKER = '_last_sweep.txt';
+    private const SWEEP_INTERVAL_SECONDS = 120; // au plus un balayage complet toutes les 2 min
 
     public static function root(): string
     {
@@ -163,6 +171,27 @@ final class Store
         }
 
         return $removed;
+    }
+
+    /**
+     * Lance un balayage complet si le precedent date de plus de
+     * SWEEP_INTERVAL_SECONDS, sinon ne fait rien (verification quasi
+     * gratuite : lecture d'un petit fichier). A appeler sur les routes a
+     * fort trafic pour garantir que le stockage reste borne meme si le
+     * Cron Job de l'hebergeur n'est pas configure.
+     */
+    public static function maybeSweep(): void
+    {
+        $marker = self::root() . '/' . self::SWEEP_MARKER;
+        $now = time();
+        $last = is_file($marker) ? (int) trim((string) file_get_contents($marker)) : 0;
+        if ($now - $last < self::SWEEP_INTERVAL_SECONDS) {
+            return;
+        }
+        // Pose le marqueur immediatement pour eviter que des requetes
+        // concurrentes ne relancent toutes le meme balayage en parallele.
+        file_put_contents($marker, (string) $now, LOCK_EX);
+        self::cleanupExpired();
     }
 
     private static function rrmdir(string $dir): void
