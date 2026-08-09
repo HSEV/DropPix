@@ -255,16 +255,41 @@
     resetDropForm();
   });
 
-  $('copy-code-btn').addEventListener('click', async () => {
-    const code = $('result-code').textContent;
+  /** Repli pour les contextes sans Clipboard API ou quand elle échoue. */
+  function copyViaExecCommand(text) {
+    const tmp = document.createElement('textarea');
+    tmp.value = text;
+    tmp.style.position = 'fixed';
+    tmp.style.opacity = '0';
+    document.body.appendChild(tmp);
+    tmp.select();
+    const ok = document.execCommand('copy');
+    tmp.remove();
+    if (!ok) throw new Error('execCommand copy a échoué');
+  }
+
+  /** Copie un code (formaté "K7P-3XQ") et affiche un retour visuel bref sur le bouton. */
+  async function copyCode(formattedCode, btn) {
+    const code = formattedCode.replace(/-/g, '');
     try {
-      await navigator.clipboard.writeText(code.replace(/-/g, ''));
-      const btn = $('copy-code-btn');
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error('Clipboard API indisponible');
+        await navigator.clipboard.writeText(code);
+      } catch {
+        // La Clipboard API peut manquer ou refuser (contexte non sécurisé,
+        // permission, focus...) : on retente via l'ancienne méthode avant
+        // d'abandonner.
+        copyViaExecCommand(code);
+      }
       btn.classList.add('copied');
       setTimeout(() => btn.classList.remove('copied'), 1200);
     } catch {
-      /* clipboard indisponible, on ignore silencieusement */
+      /* aucune methode de copie disponible, on ignore silencieusement */
     }
+  }
+
+  $('copy-code-btn').addEventListener('click', () => {
+    copyCode($('result-code').textContent, $('copy-code-btn'));
   });
 
   // ================= RECUPERER =================
@@ -322,6 +347,7 @@
   function renderGallery(batch) {
     showRetrieveStep('gallery');
     galleryGrid.innerHTML = '';
+    $('gallery-code-text').textContent = batch.codeFormatted;
 
     batch.files.forEach((file) => {
       const item = document.createElement('div');
@@ -362,6 +388,10 @@
       showRetrieveStep('expired');
     });
   }
+
+  $('gallery-copy-code-btn').addEventListener('click', () => {
+    copyCode($('gallery-code-text').textContent, $('gallery-copy-code-btn'));
+  });
 
   $('gallery-back-btn').addEventListener('click', () => {
     showRetrieveStep('form');

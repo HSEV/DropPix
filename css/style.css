@@ -299,6 +299,13 @@ body {
 .icon-btn svg { width: 18px; height: 18px; }
 .icon-btn.copied { color: var(--success); }
 
+.icon-btn-sm {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.icon-btn-sm svg { width: 14px; height: 14px; }
+
 #upload-btn { margin-top: 16px; }
 
 /* ---------- Errors / states ---------- */
@@ -365,6 +372,19 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  user-select: all;
+}
+
+.code-text-sm {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  user-select: all;
 }
 
 .countdown {
@@ -457,6 +477,17 @@ body {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.gallery-code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gallery-code-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .gallery-header-actions {
