@@ -163,6 +163,16 @@ SSL** que `droppix.hsev.fr` est bien couvert.
 C'est tout — pas de Node.js, pas de process à maintenir en vie, pas de
 CNAME vers un service externe : tout tourne directement chez Hostinger.
 
+### Mettre à jour le site après un changement
+
+`css/style.css` et `js/app.js` sont chargés avec un paramètre `?v=X` dans
+[index.html](index.html) (ex. `css/style.css?v=3`). **À chaque modification
+de l'un de ces fichiers, incrémente ce numéro** — sinon les navigateurs (et
+le cache de Hostinger) peuvent continuer à servir l'ancienne version après un
+nouvel upload, ce qui peut donner l'impression qu'un correctif n'a pas été
+appliqué. Sans ça, il faut compter sur un rechargement forcé (Ctrl+Maj+R) de
+chaque visiteur, ce qui n'est pas fiable.
+
 ## 🧪 Tester en local
 
 Si tu as PHP installé (`php -v`) :

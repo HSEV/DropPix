@@ -7,7 +7,10 @@ require_once __DIR__ . '/../lib/RateLimiter.php';
 
 header('X-Content-Type-Options: nosniff');
 
-if (!RateLimiter::allow('lookup', 30, 60)) {
+// Bucket separe de 'lookup' (devinette de code) : une seule galerie peut
+// legitimement charger jusqu'a 10 vignettes d'un coup, il faut une marge
+// large pour ne pas bloquer un usage normal.
+if (!RateLimiter::allow('view', 180, 60)) {
     http_response_code(429);
     exit;
 }

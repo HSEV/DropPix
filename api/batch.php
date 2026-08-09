@@ -8,7 +8,12 @@ require_once __DIR__ . '/../lib/Http.php';
 
 Http::commonHeaders();
 
-if (!RateLimiter::allow('lookup', 30, 60)) {
+// Cette route est la seule a servir de "devinette de code" (elle repond
+// juste existe/n'existe-pas) : c'est elle qu'on protege vraiment contre le
+// bruteforce. 60/min laisse une marge large pour un usage normal (page qui
+// se recharge, etc.) tout en restant totalement impraticable a bruteforcer
+// sur une fenetre de vie de 5 min (300 essais vs ~1 milliard de codes possibles).
+if (!RateLimiter::allow('lookup', 60, 60)) {
     Http::json(429, ['error' => 'Trop de tentatives, reessaie dans une minute.']);
 }
 

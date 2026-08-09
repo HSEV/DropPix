@@ -446,8 +446,16 @@
     if (!last) return;
     try {
       const res = await fetch(`api/batch.php?code=${encodeURIComponent(last.code)}`);
-      if (!res.ok) {
+      if (res.status === 404) {
+        // Le dépôt n'existe vraiment plus (expiré côté serveur, supprimé...) :
+        // là seulement on efface l'entrée locale.
         clearLastBatch();
+        return;
+      }
+      if (!res.ok) {
+        // Erreur temporaire (limite de débit, souci serveur ponctuel...) :
+        // on ne touche pas à l'entrée locale, on retentera au prochain
+        // rechargement au lieu de faire perdre l'accès pour rien.
         return;
       }
       const data = await res.json();

@@ -7,7 +7,8 @@ require_once __DIR__ . '/../lib/RateLimiter.php';
 
 header('X-Content-Type-Options: nosniff');
 
-if (!RateLimiter::allow('lookup', 30, 60)) {
+// Bucket separe de 'lookup' (devinette de code) : voir api/view.php.
+if (!RateLimiter::allow('view', 180, 60)) {
     http_response_code(429);
     exit;
 }
