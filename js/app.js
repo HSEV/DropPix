@@ -91,7 +91,6 @@
   const MAX_FILES = 10;
   const MAX_SIZE = 15 * 1024 * 1024;
   let selectedFiles = [];
-  let countdownTimer = null;
   let qrInstance = null;
 
   function setDropError(msg) {
@@ -405,13 +404,22 @@
   });
 
   // ---------- Countdown commun ----------
+  // Un intervalle par élément affiché (pas un seul global) : la page a deux
+  // compte à rebours indépendants qui peuvent coexister dans le DOM en même
+  // temps (#result-countdown sur l'onglet Déposer, #gallery-countdown sur
+  // Récupérer). Un seul intervalle partagé faisait que démarrer l'un
+  // arrêtait silencieusement l'autre dès qu'on changeait d'onglet.
+  const countdownTimers = new WeakMap();
+
   function startCountdown(el, expiresAt, onExpire) {
-    if (countdownTimer) clearInterval(countdownTimer);
+    const existing = countdownTimers.get(el);
+    if (existing) clearInterval(existing);
 
     function tick() {
       const remaining = expiresAt - Date.now();
       if (remaining <= 0) {
-        clearInterval(countdownTimer);
+        clearInterval(countdownTimers.get(el));
+        countdownTimers.delete(el);
         el.textContent = 'Expiré';
         onExpire?.();
         return;
@@ -421,7 +429,7 @@
       el.classList.toggle('danger', remaining < 30 * 1000);
     }
     tick();
-    countdownTimer = setInterval(tick, 1000);
+    countdownTimers.set(el, setInterval(tick, 1000));
   }
 
   // ---------- Auto-remplissage depuis un QR code (?code=XXXXXX) ----------
