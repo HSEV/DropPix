@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>DropPix — Partage d'images sans compte</title>
+  <meta name="description" content="Dépose une image, reçois un code, retrouve-la depuis n'importe quel appareil. Sans compte, suppression automatique après 5 minutes." />
+  <meta name="theme-color" content="#7c5cff" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%23ff6bcb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ccircle cx='50' cy='42' r='16' fill='white' fill-opacity='.95'/%3E%3Cpath d='M50 66 L38 82 H62 Z' fill='white' fill-opacity='.95'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">DropPix</span>
+    </div>
+    <p class="tagline">Dépose. Récupère. Ça s'efface tout seul.</p>
+  </header>
+
+  <main class="app-card">
+    <nav class="tabs" role="tablist" aria-label="Navigation">
+      <button class="tab active" id="tab-drop" role="tab" aria-selected="true" aria-controls="panel-drop">Déposer</button>
+      <button class="tab" id="tab-retrieve" role="tab" aria-selected="false" aria-controls="panel-retrieve">Récupérer</button>
+      <span class="tab-indicator" aria-hidden="true"></span>
+    </nav>
+
+    <!-- ===================== PANEL: DEPOSER ===================== -->
+    <section id="panel-drop" class="panel active" role="tabpanel" aria-labelledby="tab-drop">
+
+      <div id="drop-step-select">
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Choisir des images à déposer">
+          <input type="file" id="file-input" accept="image/*" multiple hidden />
+          <svg class="dropzone-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 16V4M12 4L7 9M12 4L17 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="dropzone-title">Glisse tes images ici</p>
+          <p class="dropzone-sub">ou clique pour parcourir — JPG, PNG, GIF, WEBP, HEIC · 15&nbsp;Mo max · 10 images max</p>
+        </div>
+
+        <div id="file-preview-list" class="file-preview-list" hidden></div>
+
+        <button id="upload-btn" class="btn btn-primary btn-block" hidden disabled>
+          <span class="btn-label">Envoyer</span>
+        </button>
+
+        <p id="drop-error" class="error-text" role="alert" hidden></p>
+      </div>
+
+      <div id="drop-step-uploading" class="upload-progress" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Envoi en cours…</p>
+      </div>
+
+      <div id="drop-step-result" class="result-block" hidden>
+        <p class="result-label">C'est en ligne. Note ce code :</p>
+        <div class="code-display">
+          <span id="result-code" class="code-text"></span>
+          <button id="copy-code-btn" class="icon-btn" title="Copier le code" aria-label="Copier le code">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="1.8"/></svg>
+          </button>
+        </div>
+
+        <p id="result-countdown" class="countdown"></p>
+
+        <div class="qr-block">
+          <img id="result-qr" alt="QR code vers ces images" width="180" height="180" />
+          <p class="qr-hint">Scanne depuis un téléphone pour ouvrir directement tes images</p>
+        </div>
+
+        <div class="result-actions">
+          <button id="result-view-btn" class="btn btn-secondary">Voir mes images</button>
+          <button id="result-reset-btn" class="btn btn-ghost">Déposer d'autres images</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PANEL: RECUPERER ===================== -->
+    <section id="panel-retrieve" class="panel" role="tabpanel" aria-labelledby="tab-retrieve" hidden>
+
+      <div id="retrieve-step-form">
+        <p class="field-label" for="code-input">Entre ton code</p>
+        <form id="retrieve-form" autocomplete="off">
+          <input id="code-input" class="code-input" type="text" inputmode="text" maxlength="7" placeholder="K7P-3XQ" aria-label="Code à 6 caractères" />
+          <button type="submit" class="btn btn-primary btn-block">Récupérer</button>
+        </form>
+        <p id="retrieve-error" class="error-text" role="alert" hidden></p>
+      </div>
+
+      <div id="retrieve-step-loading" class="upload-progress" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Recherche…</p>
+      </div>
+
+      <div id="retrieve-step-gallery" class="gallery-block" hidden>
+        <div class="gallery-header">
+          <p id="gallery-countdown" class="countdown"></p>
+          <div class="gallery-header-actions">
+            <a id="download-all-btn" class="btn btn-secondary btn-sm" href="#">Tout télécharger (.zip)</a>
+            <button id="gallery-back-btn" class="btn btn-ghost btn-sm">Nouveau code</button>
+          </div>
+        </div>
+        <div id="gallery-grid" class="gallery-grid"></div>
+      </div>
+
+      <div id="retrieve-step-expired" class="empty-state" hidden>
+        <p>⏳ Ce dépôt a expiré ou n'existe plus.</p>
+        <button id="expired-retry-btn" class="btn btn-secondary">Essayer un autre code</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Aucun compte, aucune base de données : tes images vivent 5 minutes sur le serveur puis sont supprimées définitivement.</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
