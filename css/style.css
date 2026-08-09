@@ -368,10 +368,12 @@ body {
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  /* Couleur pleine et non un degrade en background-clip:text : cette
+     technique peut echouer selon le navigateur et rendre le code
+     invisible (texte transparent sans decoupe visible), ce qui est
+     arrive en pratique. Une couleur simple garantit qu'il reste lisible
+     partout. */
+  color: var(--accent-1);
   user-select: all;
 }
 
@@ -380,10 +382,7 @@ body {
   font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent-1);
   user-select: all;
 }
 
