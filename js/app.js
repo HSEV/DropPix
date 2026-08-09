@@ -18,6 +18,44 @@
   // absolues fiables quelle que soit la profondeur de déploiement.
   const BASE_URL = location.href.replace(/[^/]*(\?.*)?$/, '');
 
+  // ---------- Mémorisation du dernier dépôt (localStorage) ----------
+  // Permet de retrouver son code après un rechargement de page tant que le
+  // dépôt est encore valide, sans jamais rien envoyer au serveur : la clé
+  // reste uniquement dans le navigateur qui a fait l'upload.
+  const LAST_BATCH_KEY = 'droppix:lastBatch';
+
+  function saveLastBatch(code, expiresAt) {
+    try {
+      localStorage.setItem(LAST_BATCH_KEY, JSON.stringify({ code, expiresAt }));
+    } catch {
+      /* localStorage indisponible (navigation privée stricte...) : tant pis */
+    }
+  }
+
+  function readLastBatch() {
+    try {
+      const raw = localStorage.getItem(LAST_BATCH_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data?.code || !data?.expiresAt) return null;
+      if (data.expiresAt <= Date.now()) {
+        localStorage.removeItem(LAST_BATCH_KEY);
+        return null;
+      }
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  function clearLastBatch() {
+    try {
+      localStorage.removeItem(LAST_BATCH_KEY);
+    } catch {
+      /* rien à faire */
+    }
+  }
+
   // ---------- Tabs ----------
   const tabsEl = document.querySelector('.tabs');
   const tabDrop = $('tab-drop');
@@ -191,7 +229,9 @@
     showDropStep('result');
     $('result-code').textContent = batch.codeFormatted;
     renderQrCode(batch.code);
+    saveLastBatch(batch.code, batch.expiresAt);
     startCountdown($('result-countdown'), batch.expiresAt, () => {
+      clearLastBatch();
       showDropStep('select');
       resetDropForm();
     });
@@ -210,7 +250,10 @@
     showDropStep('select');
   }
 
-  $('result-reset-btn').addEventListener('click', resetDropForm);
+  $('result-reset-btn').addEventListener('click', () => {
+    clearLastBatch();
+    resetDropForm();
+  });
 
   $('copy-code-btn').addEventListener('click', async () => {
     const code = $('result-code').textContent;
@@ -314,6 +357,8 @@
     $('download-all-btn').href = `api/zip.php?code=${batch.code}`;
 
     startCountdown($('gallery-countdown'), batch.expiresAt, () => {
+      const last = readLastBatch();
+      if (last?.code === batch.code) clearLastBatch();
       showRetrieveStep('expired');
     });
   }
@@ -358,5 +403,28 @@
     codeInput.dispatchEvent(new Event('input'));
     lookupCode(qrCode);
     history.replaceState({}, '', location.pathname);
+  } else {
+    // ---------- Reprise automatique du dernier dépôt (localStorage) ----------
+    // Si la page est rechargée alors qu'un dépôt vient d'être fait et que
+    // son délai de 5 minutes n'est pas écoulé, on le re-propose directement
+    // au lieu de forcer à retaper le code de mémoire.
+    restoreLastBatch();
+  }
+
+  async function restoreLastBatch() {
+    const last = readLastBatch();
+    if (!last) return;
+    try {
+      const res = await fetch(`api/batch.php?code=${encodeURIComponent(last.code)}`);
+      if (!res.ok) {
+        clearLastBatch();
+        return;
+      }
+      const data = await res.json();
+      showUploadResult(data);
+    } catch {
+      // Pas de réseau ou serveur injoignable : on laisse l'écran par défaut,
+      // on retentera au prochain rechargement.
+    }
   }
 })();
