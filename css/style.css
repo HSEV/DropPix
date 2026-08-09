@@ -78,8 +78,8 @@ body {
 .brand-mark {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  border-radius: 9px;
+  display: block;
   box-shadow: 0 6px 16px -4px rgba(124, 92, 255, 0.5);
 }
 

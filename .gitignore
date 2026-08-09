@@ -4,3 +4,7 @@ storage/*
 !storage/.htaccess
 
 *.log
+
+# Fichier source haute resolution du logo (1,2 Mo) : seules les versions
+# optimisees (logo.png, favicon-*.png) sont versionnees.
+media/logo-source.png
