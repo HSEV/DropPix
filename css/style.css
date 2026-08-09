@@ -150,7 +150,12 @@ body {
   transform: translateX(100%);
 }
 
-.panel[hidden] { display: none; }
+/* [hidden] doit toujours l'emporter, meme sur un element dont la classe
+   fixe elle-meme un display (ex: .upload-progress, .empty-state) : sans le
+   !important, la specificite est identique et l'ordre du cascade donne la
+   victoire a la classe, ce qui affichait les etapes "en chargement" au
+   premier rendu de la page. */
+[hidden] { display: none !important; }
 
 /* ---------- Dropzone ---------- */
 .dropzone {
