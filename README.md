@@ -34,13 +34,13 @@ traîne.
 ## 🖼️ Aperçu du flux
 
 ```
-   PC                         DropPix                       Téléphone
-┌─────────┐   dépose image   ┌─────────┐   scan du QR /   ┌─────────┐
-│  photo  │ ───────────────▶ │  K7P-3XQ │ ───────────────▶ │  ouvre   │
-│         │                  │  + QR    │   saisie du code │  l'image │
-└─────────┘                  └─────────┘                  └─────────┘
+   PC                           DropPix                      Téléphone
+┌─────────┐   dépose image    ┌─────────┐   scan du QR /    ┌─────────┐
+│  photo  │ ───────────────▶ │  K7P-3XQ │ ───────────────▶ │ ouvre   │
+│         │                   │  + QR   │   saisie du code  │ l'image │
+└─────────┘                   └─────────┘                   └─────────┘
                                    │
-                          ⏱ auto-suppression après 5 min
+                    ⏱ auto-suppression après 5 min
 ```
 
 ## 🧱 Stack technique (aucune dépendance à installer)
