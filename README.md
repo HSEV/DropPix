@@ -1,6 +1,7 @@
 <div align="center">
 
-# 📸 DropPix
+# <img width="80" height="80" alt="ChatGPT Image 10 août 2026, 01_24_36" src="https://github.com/user-attachments/assets/a57a5d7a-96ff-4de5-939b-8c4b5d816436" />
+ DropPix
 
 **Dépose une image. Récupère un code. Retrouve-la n'importe où. Elle s'efface toute seule.**
 
