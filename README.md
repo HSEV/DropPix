@@ -1,6 +1,7 @@
 <div align="center">
 
-# <a href="https://droppix.hsev.fr"><img width="80" height="80" alt="Logo DropPix" src="media/logo.png" /></a> DropPix
+# <a href="https://droppix.hsev.fr"><img width="60" height="60" alt="Logo DropPix" src="media/logo.png" /></a> 
+DropPix
 
 **Dépose une image. Récupère un code. Retrouve-la n'importe où. Elle s'efface toute seule.**
 
