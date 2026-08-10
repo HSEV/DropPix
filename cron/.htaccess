@@ -1,9 +1,0 @@
-# Le script de nettoyage est destine a etre lance par le Cron Job de
-# l'hebergeur (en ligne de commande), jamais via une URL publique.
-<IfModule mod_authz_core.c>
-    Require all denied
-</IfModule>
-<IfModule !mod_authz_core.c>
-    Order allow,deny
-    Deny from all
-</IfModule>

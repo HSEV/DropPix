@@ -141,14 +141,31 @@ par défaut chez Hostinger, aucune action nécessaire en général).
 
 ### 4. Configurer le nettoyage automatique (Cron Job)
 
-Dans **hPanel → Avancé → Cron Jobs**, crée une tâche :
-- Fréquence : toutes les minutes (`* * * * *`)
-- Commande :
-  ```
-  php /home/<ton-utilisateur>/domains/hsev.fr/public_html/droppix/cron/cleanup.php
-  ```
-  *(le chemin exact est affiché dans hPanel → Fichiers → Gestionnaire de
-  fichiers, en haut de la fenêtre)*
+Dans **hPanel → Avancé → Cron Jobs**, crée une tâche avec une fréquence de
+toutes les minutes (`* * * * *`). Deux façons de la brancher sur
+`cron/cleanup.php`, selon ce que ton hébergeur exécute le plus fiablement :
+
+**Option A — en CLI** (à privilégier si ça fonctionne) :
+```
+php /chemin/absolu/vers/droppix/cron/cleanup.php
+```
+Le chemin exact est affiché dans hPanel → Fichiers → Gestionnaire de
+fichiers, en haut de la fenêtre. Si tu obtiens *"Could not open input
+file"*, c'est que ce chemin n'est pas le bon — vérifie-le directement dans
+le gestionnaire de fichiers plutôt que de le deviner.
+
+**Option B — par requête HTTP** (souvent le mode le mieux supporté sur
+l'hébergement mutualisé, notamment quand hPanel suggère lui-même un exemple
+du type `wget ... https://tondomaine/...`) :
+```
+wget -O /dev/null "https://droppix.hsev.fr/cron/cleanup.php?key=TA_CLE_SECRETE"
+```
+Dans ce cas, ouvre `cron/cleanup.php` **directement sur le serveur** (FTP ou
+gestionnaire de fichiers hPanel, pas dans ce dépôt Git) et remplace la
+constante `CRON_SECRET` par une chaîne aléatoire connue de toi seul — sans
+ça, la requête HTTP est refusée (403) par sécurité. **Ne commite jamais ta
+vraie clé dans le dépôt GitHub public**, modifie-la uniquement sur le
+serveur.
 
 Ce Cron Job est la façon la **plus fiable** de garantir que le stockage ne
 grossit jamais, mais DropPix a aussi deux filets de sécurité intégrés au cas
