@@ -6,6 +6,8 @@
 
 Aucun compte. Aucune base de données. Suppression automatique après **5 minutes**.
 
+### [![Ouvrir DropPix](https://img.shields.io/badge/🚀_Ouvrir_DropPix-droppix.hsev.fr-7c5cff?style=for-the-badge)](https://droppix.hsev.fr)
+
 ![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-777BB4?logo=php&logoColor=white)
 ![No database](https://img.shields.io/badge/database-none-blueviolet)
 ![No Composer](https://img.shields.io/badge/dependencies-aucune-success)
@@ -102,102 +104,29 @@ DropPix/
 Chaque dossier interne (`lib/`, `cron/`, `storage/`) a son propre
 `.htaccess` qui bloque tout accès direct par URL.
 
-## 🚀 Déployer sur Hostinger (hébergement mutualisé)
+## 🚀 Déploiement
 
-Pas besoin de SSH, de Composer ni de build : on dépose juste les fichiers.
+Le site tourne sur n'importe quel hébergement PHP 7.4+ classique (mutualisé
+ou non), sans base de données ni build :
 
-### 1. Créer le sous-domaine
-
-Dans **hPanel → Domaines → Sous-domaines** :
-- Sous-domaine : `droppix`
-- Domaine : `hsev.fr`
-- Dossier personnalisé : `droppix` *(hPanel créera alors
-  `public_html/droppix`, qui deviendra la racine de
-  `droppix.hsev.fr`)*
-
-### 2. Déposer les fichiers
-
-Par FTP (identifiants dans hPanel → Fichiers → FTP) ou le gestionnaire de
-fichiers hPanel : envoie **le contenu du dépôt** (pas le dossier `DropPix`
-lui-même, son contenu) directement dans `public_html/droppix/`.
-
-```
-public_html/
-└── droppix/
-    ├── index.html
-    ├── css/
-    ├── js/
-    ├── api/
-    ├── lib/
-    ├── cron/
-    ├── storage/
-    └── .htaccess
-```
-
-### 3. Vérifier les permissions
-
-Le dossier `storage/` doit être accessible en écriture par PHP (c'est le cas
-par défaut chez Hostinger, aucune action nécessaire en général).
-
-### 4. Configurer le nettoyage automatique (Cron Job)
-
-Dans **hPanel → Avancé → Cron Jobs**, crée une tâche avec une fréquence de
-toutes les minutes (`* * * * *`). Deux façons de la brancher sur
-`cron/cleanup.php`, selon ce que ton hébergeur exécute le plus fiablement :
-
-**Option A — en CLI** (à privilégier si ça fonctionne) :
-```
-php /chemin/absolu/vers/droppix/cron/cleanup.php
-```
-Le chemin exact est affiché dans hPanel → Fichiers → Gestionnaire de
-fichiers, en haut de la fenêtre. Si tu obtiens *"Could not open input
-file"*, c'est que ce chemin n'est pas le bon — vérifie-le directement dans
-le gestionnaire de fichiers plutôt que de le deviner.
-
-**Option B — par requête HTTP** (souvent le mode le mieux supporté sur
-l'hébergement mutualisé, notamment quand hPanel suggère lui-même un exemple
-du type `wget ... https://tondomaine/...`) :
-```
-wget -O /dev/null "https://droppix.hsev.fr/cron/cleanup.php?key=TA_CLE_SECRETE"
-```
-Dans ce cas, ouvre `cron/cleanup.php` **directement sur le serveur** (FTP ou
-gestionnaire de fichiers hPanel, pas dans ce dépôt Git) et remplace la
-constante `CRON_SECRET` par une chaîne aléatoire connue de toi seul — sans
-ça, la requête HTTP est refusée (403) par sécurité. **Ne commite jamais ta
-vraie clé dans le dépôt GitHub public**, modifie-la uniquement sur le
-serveur.
-
-Ce Cron Job est la façon la **plus fiable** de garantir que le stockage ne
-grossit jamais, mais DropPix a aussi deux filets de sécurité intégrés au cas
-où tu oublierais de le configurer :
-- suppression immédiate dès qu'un code expiré est consulté (visite, aperçu
-  d'une vignette, etc.) ;
-- balayage complet automatique déclenché par le trafic normal du site
-  (upload ou consultation d'un code), au plus une fois toutes les 2 minutes —
-  voir `Store::maybeSweep()` dans [lib/Store.php](lib/Store.php).
-
-Sans Cron Job, un dépôt qui n'est jamais reconsulté ET dont aucun autre
-visiteur ne fait de requête au site pendant un long moment peut rester un peu
-plus longtemps sur le disque avant d'être balayé — mais le stockage ne peut
-pas croître indéfiniment tant que le site reçoit ne serait-ce qu'un peu de
-trafic. Le Cron Job reste recommandé pour un site à très faible fréquentation.
-
-### 5. Activer le HTTPS
-
-hPanel active normalement un certificat SSL gratuit automatiquement pour
-chaque sous-domaine (Let's Encrypt). Vérifie dans **hPanel → Sécurité →
-SSL** que `droppix.hsev.fr` est bien couvert.
-
-C'est tout — pas de Node.js, pas de process à maintenir en vie, pas de
-CNAME vers un service externe : tout tourne directement chez Hostinger.
+1. Dépose le contenu du dépôt à la racine du domaine/sous-domaine.
+2. Vérifie que `storage/` est accessible en écriture par PHP.
+3. Programme `cron/cleanup.php` sur une tâche planifiée (CLI ou requête HTTP
+   avec une clé secrète — voir les commentaires en tête du fichier), pour
+   garantir que le stockage ne grossit jamais. DropPix a aussi deux filets
+   de sécurité intégrés au cas où ce ne serait pas fait (suppression à la
+   consultation + balayage déclenché par le trafic, voir
+   `Store::maybeSweep()` dans [lib/Store.php](lib/Store.php)).
+4. Active le HTTPS (généralement automatique via Let's Encrypt chez la
+   plupart des hébergeurs).
 
 ### Mettre à jour le site après un changement
 
 `css/style.css` et `js/app.js` sont chargés avec un paramètre `?v=X` dans
 [index.html](index.html) (ex. `css/style.css?v=3`). **À chaque modification
 de l'un de ces fichiers, incrémente ce numéro** — sinon les navigateurs (et
-le cache de Hostinger) peuvent continuer à servir l'ancienne version après un
-nouvel upload, ce qui peut donner l'impression qu'un correctif n'a pas été
+le cache de l'hébergeur) peuvent continuer à servir l'ancienne version après
+un nouvel upload, ce qui peut donner l'impression qu'un correctif n'a pas été
 appliqué. Sans ça, il faut compter sur un rechargement forcé (Ctrl+Maj+R) de
 chaque visiteur, ce qui n'est pas fiable.
 
